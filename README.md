@@ -4,16 +4,17 @@
 
 > Exploring some lesser-known techniques for lightening the cargo between server and mobile device
 
-### Internet like it's 1999
+## Internet like it's 1999
 June 28, 2007 was a good day to be a web developer. The promise of ubiquitous "high speed" internet was almost a reality, at least in many markets. [Charlie](http://www.youtube.com/watch?v=_OBlgSz8sSM) had just gone viral. Our attention shifted from uglifying compressed progressive jpegs to the possibilities of streaming HD video.
 
 The next day, the first iPhone was released. That, as Apple simply put it, changed everything.
 
-### Fly-by of the Basics
-Google provides an [extensive guide](https://developers.google.com/speed/) on making the web faster. Combining minified JS and CSS files is common practice, as are carefully configured cache settings and the use of CDNs. This post takes a look at ways you might be able to squeeze and shave a few more KB for those low-bandwidth situations where it actually matters. And of course we'll be viewing all of this through Node.js colored lenses.
+Today, 4G LTE can provide some impressive speeds. But if you're like me, and every smartphone owner I know, and every commenter on the Internet, full-bar 4G heaven is not a permanent residence.
 
-### The Setup
-Browser consoles include network inspecting tools, but when I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/)
+So maybe you went with a native iOS app to get the most performance, and now a spotty 3G connection is your bottleneck. What are some ways to speed things up a bit and make your app feel faster? Let's look at some techniques for those low-bandwidth situations where every KB matters. These techniques fall within three strategies: make fewer network calls, make them smaller, and delay them.
+
+## Benchmark and monitor
+Before we start, let's make sure we can track our progress. Browser consoles include network inspecting tools, but when I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/)
 
 ![Charles Proxy logo of a vase](http://www.charlesproxy.com/static/img/charles_hdr.png)
 
@@ -26,6 +27,9 @@ Finally, to trick servers into thinking you're on a mobile browser, set the "Use
 ![Browser web inspector settings to fake iPhone](img/fake-user-agent.png)
 
 Now it's time to start optimizing!
+
+### Fly-by of the Basics
+Google provides an [extensive guide](https://developers.google.com/speed/) on making the web faster. Combining minified JS and CSS files is common practice, as are carefully configured cache settings and the use of CDNs. You'll save a lot of overhead using those techniques, so start there if you aren't already using them.
 
 ### Compression
 There are several issues to consider when compressing content, such as the time required to compress and uncompress. As with most things on the web, there is no "always right" answer. Since optimizing for bandwidth is our focus here, the answer is: _compress_.
@@ -82,5 +86,14 @@ Stuff that result into your HTML or CSS, which will end up something like:
     9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot" />
 
 For squeezing the most out of your image files, try [ImageOptim](http://imageoptim.com/) if you're on a Mac, [PNGGauntlet](http://pnggauntlet.com/) for Windows, or [Smush.it](http://www.smushit.com/ysmush.it/) if you want a web-based services.
+
+### Sneaky Background Calls
+Some techniques require as much UX thinking as they do technical prowess. For example, if a user creates a new item in your app, you can display a confirmation immediately, and then process the server call in the background. If the call fails due to a poor or missing network connection, you can back up and allow the user to try again, or be even smarter by saving the data locally and pushing it up to the server when the device is back online. Instragram famously [took a brilliant approach](http://www.cultofmac.com/164285/the-clever-trick-instagram-uses-to-upload-photos-so-quickly/) by starting the upload of the photo long before the user clicks "done." Take a look at all the calls your app needs to make, and work with your design team to find opportunities for clever background calls.
+
+## What About Premature Optimization?
+As developers we remind ourselves and each other to avoid premature optimization. It's a good principle, but many of the techniques listed here can and should be implemented early in your development process. Tools like [Grunt](http://gruntjs.com/) make it easy to minify and combine your files in the background as you go. Tweaking the compression settings is something you won't need to do often, but it will pay off across your app for as long as it's running. Giving some thought beforehand to aggregation and partial responses will result in snappier performance without writing much, if any, extra code.
+
+If early beta versions of your app feel speedy, your users can focus their feedback on features rather than performance.
+
 
 
