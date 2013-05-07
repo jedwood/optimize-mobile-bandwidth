@@ -2,7 +2,7 @@
 
 ---
 
-> Exploring some lesser-known techniques for lightening the cargo between server and mobile device
+> Exploring some techniques for lightening the cargo between server and mobile device
 
 ## Internet like it's 1999
 June 28, 2007 was a good day to be a web developer. The promise of ubiquitous "high speed" internet was almost a reality, at least in many markets. [Charlie](http://www.youtube.com/watch?v=_OBlgSz8sSM) had just gone viral. Our attention shifted from uglifying compressed progressive jpegs to the possibilities of streaming HD video.
@@ -14,7 +14,7 @@ Today, 4G LTE can provide some impressive speeds. But if you're like me, and eve
 So you went with a native iOS app to get the most performance, and now a spotty 3G connection is your bottleneck. How can you speed things up a bit and make your app feel faster? Let's look at some techniques for those low-bandwidth situations where every KB matters. These fall within three strategies: _make fewer network calls, make them smaller, and delay them_.
 
 ## Benchmark and measure
-Before we start, let's make sure we can track our progress. When I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/)
+Before we start, let's make sure we can track our progress. When I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/).
 
 ![Charles Proxy logo of a vase](http://www.charlesproxy.com/static/img/charles_hdr.png)
 
@@ -37,7 +37,7 @@ Finally, it can sometimes be helpful to trick a server into thinking you're on a
 Once you get some good benchmarks of your existing calls, it's time to start optimizing!
 
 ### Fly-by of the Basics
-Google provides an [extensive guide](https://developers.google.com/speed/) on making the web faster. Combining minified JS and CSS files is common practice, as are carefully configured cache settings and the use of CDNs. You'll save a lot of overhead using those techniques, so start there if you aren't already using them.
+Google provides an [extensive guide](https://developers.google.com/speed/) on making the web faster. Combining minified JS and CSS files is common practice, as are carefully configured cache settings and the use of CDNs. You'll save a lot of overhead using those techniques, so start there.
 
 ### Compression
 There are several issues to consider when compressing content, such as the time required to compress and uncompress. As with most things on the web, there is no "always right" answer. Since optimizing for bandwidth is our focus here, the answer is: _compress_.
@@ -73,14 +73,14 @@ What if the API doesn't support partial responses? That seems to be the case for
 
     select title, posters.thumbnail, links.self from rottentomatoes.search where title='tron' and apikey='YOURKEYHERE'
 
-And YQL will generate a custom endpoint that we can call to receive just the parts we need for a list of movies, with links to the details.
+And YQL will generate a custom endpoint. When we call that, YQL proxies the call and strips out all the properties we don't need.
 
 ### Aggregation
-Many apps will make multiple API calls when first loading a logged-in user, such as for a dashboard with several different sections of data. For an API I recently wrote in Node.js, the calls were for `points` and `credit.` From an API design point of view, it made sense for each of those methods to be separate, but we reduced the overhead of multiple calls by providing an additional `summary` aggregate call to send them both at once. Internally it looked something like this:
+Partial responses are helpful when an API sends you too much data, but sometimes you have the opposite problem. Your app might need to make multiple API calls at once, such as for a dashboard with several different sections of data. For an API I recently wrote in Node.js, it made sense for the API to have individual `points` and `credit` methods, but we reduced the overhead of multiple calls by providing an additional `summary` aggregate call to send them both at once. Internally it looked something like this:
 
     var retObj = {points: null, credit: null};
     var done = function() {
-        if (retObj.points !== null && retObj.credit !== null) fn(null, retObj);
+        if (retObj.points !== null && retObj.credit !== null) res.send(retObj);
     };
 
     points(userId, function(err, p) {
@@ -93,14 +93,12 @@ Many apps will make multiple API calls when first loading a logged-in user, such
         done();
     });
 
-That's a pretty ugly but effective 'DIY' way to make parallel calls. You could also use one of the (controversial) control-flow libraries like [IcedCoffeeScript](http://maxtaco.github.io/coffee-script/) or [Streamline](https://github.com/Sage/streamlinejs) if things get too messy. The [hapi framework](http://walmartlabs.github.io/hapi/) has a built-in way of elegantly aggregating methods that you can define by the parameters you send within a single call.
-
-YQl also has a `multi query` option, as well as some handy [sub-select features](http://developer.yahoo.com/yql/guide/joins.html).
+That's a pretty ugly but effective DIY way to make parallel calls. You could also use one of the (controversial) control-flow libraries like [IcedCoffeeScript](http://maxtaco.github.io/coffee-script/) or [Streamline](https://github.com/Sage/streamlinejs) if things get too messy. The [hapi framework](http://walmartlabs.github.io/hapi/) has a built-in way of elegantly aggregating methods that you can define by the parameters you send within a single call. YQL also has a `multi query` option, as well as some handy [sub-select features](http://developer.yahoo.com/yql/guide/joins.html).
 
 ### Images
 Most developers are already mindful of image size, and take advantage of [CSS sprites](https://github.com/richardbutler/node-spritesheet) where appropriate. For squeezing the most out of your image files, try [ImageOptim](http://imageoptim.com/) if you're on a Mac, [PNGGauntlet](http://pnggauntlet.com/) for Windows, or [Smush.it](http://www.smushit.com/ysmush.it/) if you want a web-based services.
 
-Not as many developers use [dataURIs](https://en.wikipedia.org/wiki/Data_URI_scheme). These base64 encoded versions of your images will be slightly larger than the files, but that extra size can mostly be gzipped away and you save the overhead of extra HTTP requests. As a rule of thumb, if you've got several small images that aren't stuffed into a sprite you might consider converting them to dataURIs. Here's how you do that in Node.js:
+Not as many developers use [dataURIs](https://en.wikipedia.org/wiki/Data_URI_scheme). These base64 encoded versions of your images will be slightly larger than the files, but that extra size can mostly be gzipped away and you save the overhead of extra HTTP requests because the data for the image is included in the HTML or CSS. As a rule of thumb, if you've got several small images that aren't stuffed into a sprite you might consider converting them to dataURIs. Here's how you do that in Node.js:
 
     var base64_data = fs.readFileSync('sample.png').toString('base64');
 
