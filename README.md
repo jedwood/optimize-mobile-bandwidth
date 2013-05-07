@@ -76,9 +76,24 @@ What if the API doesn't support partial responses? That seems to be the case for
 And YQL will generate a custom endpoint that we can call to receive just the parts we need for a list of movies, with links to the details.
 
 ### Aggregation
-Short pages with lazy loading and infinite scrolling are fine in many cases. They can really annoying when you're trying to scroll through results on a mobile device that has a slow connection. When an API enforces a small page limit and you know your users need quick access to more than that limit, it might be worth combining multple calls on the backend. Or maybe you have several granular endpoints that are commonly called at the same time. You can reduce the overhead of multiple calls by providing an aggregate call to send it all at once.
+Many apps will make multiple API calls when first loading a logged-in user, such as for a dashboard with several different sections of data. For an API I recently wrote in Node.js, the calls were for `points` and `credit.` From an API design point of view, it made sense for each of those methods to be separate, but we reduced the overhead of multiple calls by providing an additional `summary` aggregate call to send them both at once. Internally it looked something like this:
 
-In Node.js you can roll your own functions to make these calls in parallel, or use one of the (controversial) control-flow libraries like [IcedCoffeeScript](http://maxtaco.github.io/coffee-script/) or [Streamline](https://github.com/Sage/streamlinejs). The [hapi framework](http://walmartlabs.github.io/hapi/) has a built-in way of elegantly handling aggregated calls that are defined on the fly.
+    var retObj = {points: null, credit: null};
+    var done = function() {
+        if (retObj.points !== null && retObj.credit !== null) fn(null, retObj);
+    };
+
+    points(userId, function(err, p) {
+        retObj.points = p;
+        done();
+    });
+
+    credit(userId, function(err, c) {
+        retObj.credit = c;
+        done();
+    });
+
+That's a pretty ugly but effective 'DIY' way to make parallel calls. You could also use one of the (controversial) control-flow libraries like [IcedCoffeeScript](http://maxtaco.github.io/coffee-script/) or [Streamline](https://github.com/Sage/streamlinejs) if things get too messy. The [hapi framework](http://walmartlabs.github.io/hapi/) has a built-in way of elegantly aggregating methods that you can define by the parameters you send within a single call.
 
 YQl also has a `multi query` option, as well as some handy [sub-select features](http://developer.yahoo.com/yql/guide/joins.html).
 
