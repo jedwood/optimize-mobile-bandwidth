@@ -1,4 +1,4 @@
-# Optimizing Mobile Bandwidth
+# Strategies for Optimizing Mobile Bandwidth
 
 ---
 
@@ -13,20 +13,28 @@ Today, 4G LTE can provide some impressive speeds. But if you're like me, and eve
 
 So you went with a native iOS app to get the most performance, and now a spotty 3G connection is your bottleneck. How can you speed things up a bit and make your app feel faster? Let's look at some techniques for those low-bandwidth situations where every KB matters. These fall within three strategies: _make fewer network calls, make them smaller, and delay them_.
 
-## Benchmark and monitor
-Before we start, let's make sure we can track our progress. Browser consoles include network inspecting tools, but when I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/)
+## Benchmark and measure
+Before we start, let's make sure we can track our progress. When I really need to dissect HTTP I turn to [Charles](http://www.charlesproxy.com/)
 
 ![Charles Proxy logo of a vase](http://www.charlesproxy.com/static/img/charles_hdr.png)
 
-Charles shows you all the fine details of incoming and outgoing calls. You can save sessions, make tweaks to headers or variables, and replay them. It lets you map DNS and flush caches. It also has bandwidth throttling to help us simulate mobile network speeds.
+In addition to file sizes and duration, Charles shows you all the fine details of incoming and outgoing calls. You can save sessions, make tweaks to headers or variables, and replay them. It lets you map DNS and flush caches. It also has bandwidth throttling to help us simulate mobile network speeds.
 
 ![Charles bandwidth settings at 512 kbps](img/charles-throttle.png)
 
-Finally, to trick servers into thinking you're on a mobile browser, set the "User Agent Override" in Chrome or Safari. Find that by clicking the little cog icon on the bottom-right of the web inspector.
+We can also get much of this information from the built-in browser console. Here's what it looks like in Chrome. Select the "Network" tab and refresh the page.
+
+![Chrome Web Inspector showing network chart](img/network-inspector.png)
+
+The "Size / Content" column will often show different values, sometimes drastically. The `size` value represents how many bytes were sent over the network for that request, whereas the `content` value is the actual size of the asset or chunk of HTML. Cookies and other headers can increase the `size` relative to the `content.` Compression can make the `content` appear much larger, because the value shown is after the content is decompressed. You might also see a value of "(from cache)." To reload the page with a cleared cache in Chrome, hit `Command+Shift+R` on a Mac, `Shift+F5` on Windows.
+
+Rolling your mouse over the colored blobs in the `timeline` chart section will give you a breakdown of how much time was spent waiting for the content to start transfer, and how much time it took for it to transfer over the network once it started. Along the bottom you can filter out these results by resource type.
+
+Finally, it can sometimes be helpful to trick a server into thinking you're on a mobile browser, since they are sometimes configured to send different data and assets. Set the "User Agent Override", which you can access by clicking the little cog icon on the bottom-right of the web inspector.
 
 ![Browser web inspector settings to fake iPhone](img/fake-user-agent.png)
 
-Now it's time to start optimizing!
+Once you get some good benchmarks of your existing calls, it's time to start optimizing!
 
 ### Fly-by of the Basics
 Google provides an [extensive guide](https://developers.google.com/speed/) on making the web faster. Combining minified JS and CSS files is common practice, as are carefully configured cache settings and the use of CDNs. You'll save a lot of overhead using those techniques, so start there if you aren't already using them.
